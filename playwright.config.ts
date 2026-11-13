@@ -1,32 +1,34 @@
-import { defineConfig, devices } from '@playwright/test';
-import dotenv from 'dotenv';
-
-dotenv.config({ quiet: true });
-
-const isCI = process.env.CI === 'true';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './tests/generated',
-  timeout: Number(process.env.TEST_TIMEOUT ?? 30000),
-  expect: { timeout: Number(process.env.EXPECT_TIMEOUT ?? 5000) },
+  testDir: "./tests/generated",
+  // Each ticket now holds a dozen independent cases, and the cart ones are slow.
+  // Without this, one worker would sit on a single ticket while the others idle.
   fullyParallel: true,
-  forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
+  // These run against the live production site, whose cart AJAX degrades sharplyre
+  // under concurrency: at four workers, cart totals and the header count were
+  // still stale after 45s. Two keeps the suite honest without hammering the site.
+  workers: 2,
+  // One retry, so a dropped cart fragment does not read as a broken feature. A
+  // case that only passes on the retry is reported as flaky rather than clean.
+  retries: 1,
   reporter: [
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['json', { outputFile: 'test-results/results.json' }],
+    // Playwright's own report cannot be opened off disk - it fetches each test's
+    // data at runtime, which file:// blocks - so it lives out of the way under
+    // reports/ and is read through "npm run report", which serves it.
+    ["html", { open: "never", outputFolder: "reports/playwright" }],
+    ["json", { outputFile: "test-results/results.json" }],
   ],
   use: {
-    baseURL: process.env.BASE_URL ?? 'https://www.addwebsolution.com/',
-    headless: process.env.HEADLESS !== 'false',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    baseURL: "https://www.shreeradheydairy.com/",
+    // Every test case owes the Jira ticket a screenshot of its final state, so
+    // capture one on pass and on failure rather than leaving it to each spec.
+    screenshot: "on",
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
 });
