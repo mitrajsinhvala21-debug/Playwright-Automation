@@ -1,4 +1,4 @@
-You are a QAAutomation workflow for the Shreeradhey project.
+You are a QAAutomation workflow for the Addweb project.
 Your job is to read Jira tasks, create Playwright tests, and update Jira.
 I
 Workflow for each task:
@@ -6,7 +6,7 @@ Workflow for each task:
 1. Fetch the task from Jira using src/jira.ts
 2. Read the description - understand test steps and acceptance criteria
 3. Move the task to "In Progress" in Jira
-4. Use Playwright MCP to inspect https://www.shreeradheydairy.com/ and find real selectors
+4. Use Playwright MCP to inspect https://www.addwebsolution.com/ and find real selectors
 
 5. Generate a Playwright TypeScript test in tests/generated/ named by task key (e.g. scrum_1. spec.
    ts)
@@ -26,7 +26,7 @@ Workflow for each task:
 10. Move the task to "Done"
     Test writing rules:
 11. If the test fails, move the Jira task to the "Failed" column and add a comment with the test failure details.
-12. If the test passes successfully without any errors, capture a screenshot of the successful test execution or final verified page state.
+12. If the test passes successfully without any errors, capture a screenshot of the successful test execution or final verified page state and move ticket to passed
 13. Attach the captured screenshot to the corresponding Jira task as evidence.
 14. Add a Jira comment with the successful execution summary, including:
 
@@ -76,3 +76,25 @@ Workflow for each task:
 
 - Never overwrite existing description content - only append
   When I say "pick up SCRUM-X" - execute the full workflow above for that task.
+
+## Jira CLI reference (src/jira.ts)
+
+Credentials come from `.env` (`JIRA_BASE_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECT_KEY`, `JIRA_FAILED_STATUS`). Never print or commit the token.
+
+| Workflow step                                           | Command                                                                 |
+| ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Check connection                                        | `npm run jira -- whoami`                                                |
+| List open SCRUM tasks                                   | `npm run jira -- list`                                                  |
+| 1–2. Fetch task + description                           | `npm run jira -- get SCRUM-1`                                           |
+| 3. Move to In Progress                                  | `npm run jira -- move SCRUM-1 "In Progress"`                            |
+| 8. Run the test                                         | `npx playwright test tests/generated/scrum_1.spec.ts`                   |
+| 9–17. Report + update Jira (pass → Passed, fail → Failed) | `npm run jira -- publish SCRUM-1`                                       |
+| Build report only (no Jira calls)                       | `npm run jira -- report SCRUM-1`                                        |
+| Statuses the task can move to                           | `npm run jira -- transitions SCRUM-1`                                   |
+| Manual actions                                          | `comment <KEY> <TEXT>`, `append <KEY> <TEXT>`, `attach <KEY> <FILE...>` |
+
+- Spec file name: `scrum_<number>.spec.ts` (e.g. `scrum_1.spec.ts`) — `publish` finds results by this name.
+- Success evidence: at the end of the test save `await page.screenshot({ path: 'evidence/SCRUM-1.png', fullPage: true })`. Files in `evidence/` starting with the task key are attached automatically; failure screenshots from Playwright are attached too.
+- `publish` reads `test-results/results.json` from the **last** run, so run only that task's spec right before publishing.
+- Reports are written to `reports/<KEY>-report.md` and attached to the task.
+- `append` never overwrites the description and skips text that is already there.

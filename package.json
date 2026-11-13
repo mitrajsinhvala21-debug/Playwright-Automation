@@ -1,24 +1,21 @@
 {
-  "name": "shree_radhey_automation",
+  "name": "addweb_site_automation",
   "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "test:headed": "playwright test --headed",
-    "report": "playwright show-report reports/playwright",
-    "html-report": "tsx src/html-report-cli.ts",
-    "generate": "tsx src/generate-cli.ts",
-    "flow": "tsx src/flow.ts",
-    "jira": "tsx src/jira-cli.ts",
-    "workflow": "tsx src/workflow.ts",
-    "notify": "tsx src/notify-cli.ts",
-    "open-report": "open reports/html/index.html"
+    "report": "playwright show-report",
+    "jira": "tsx src/jira.ts",
+    "system-test": "playwright test --config playwright.system.config.ts",
+    "system-report": "tsx scripts/build-system-report.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.5.1",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   },
